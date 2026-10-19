@@ -1,0 +1,11 @@
+.git
+release
+backend/dist
+backend/jike-auth.exe
+backend/uploads
+frontend/dist
+frontend/node_modules
+sdk/ws/nodejs/node_modules
+**/.DS_Store
+**/*.log
+doc/client-api/client-api.zip

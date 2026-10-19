@@ -1,0 +1,37 @@
+services:
+  auth-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jike-auth-backend-dev
+    restart: unless-stopped
+    environment:
+      - ALLOW_DEBUG=true
+    volumes:
+      - uploads:/app/uploads
+      # config.yaml 由后端首次启动时的安装向导生成，不纳入版本库。
+      # 请先执行：docker compose run --rm auth-backend /app/server 触发初始化，
+      # 或手动把 config.yaml 放到仓库根目录后再启动。
+      # - ./config.yaml:/app/config.yaml
+    networks:
+      - jike-auth-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jike-auth-frontend-dev
+    restart: unless-stopped
+    depends_on:
+      - auth-backend
+    ports:
+      - "5174:80"
+    networks:
+      - jike-auth-net
+
+volumes:
+  uploads:
+
+networks:
+  jike-auth-net:
+    driver: bridge

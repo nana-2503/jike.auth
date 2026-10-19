@@ -1,0 +1,45 @@
+# Runtime configuration and secrets
+config*.yaml
+config*.yml
+!config.example.yaml
+!config.example.yml
+backend/config*.yaml
+backend/config*.yml
+!backend/config.example.yaml
+!backend/config.example.yml
+.env
+.env.*
+!.env.example
+
+# License cache and release binaries
+.license/
+*.license
+release/
+
+# Local docker buildx state
+.docker/buildx/
+
+# Runtime uploads and generated data
+backend/uploads/
+uploads/
+*.log
+*.pid
+*.zip
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+
+# Go build artifacts and caches
+*.test
+*.out
+bin/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,12 @@
+{
+  "name": "ws-sdk-example",
+  "version": "1.0.0",
+  "description": "WebSocket SDK 对接示例",
+  "main": "ws-client.js",
+  "scripts": {
+    "start": "node example.js"
+  },
+  "dependencies": {
+    "ws": "^8.0.0"
+  }
+}

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK 开发文档</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/misans-webfont/1.0.4/misans-style.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "MiSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #333; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+
+    /* 顶栏 */
+    .topbar { height: 56px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; padding: 0 24px; flex-shrink: 0; gap: 16px; }
+    .topbar .menu-btn { display: none; background: none; border: none; font-size: 22px; cursor: pointer; color: #333; padding: 2px 6px; line-height: 1; }
+    .topbar h1 { font-size: 18px; color: #1890ff; font-weight: 600; }
+    .topbar .version { font-size: 12px; color: #999; background: #f0f2f5; padding: 2px 8px; border-radius: 4px; }
+
+    /* 下方容器 */
+    .container { flex: 1; display: flex; overflow: hidden; }
+
+    /* 遮罩层 */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 9; }
+
+    /* 侧边栏 */
+    .sidebar { width: 260px; background: #fff; border-right: 1px solid #e8e8e8; display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
+    .sidebar-search { padding: 16px; border-bottom: 1px solid #f0f0f0; }
+    .sidebar-search input { width: 100%; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; outline: none; transition: border-color .2s; }
+    .sidebar-search input:focus { border-color: #1890ff; }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .nav-group { margin-bottom: 4px; }
+    .nav-group-title { padding: 8px 20px 4px; font-size: 12px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .nav-item { padding: 8px 20px 8px 28px; font-size: 14px; color: #555; cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
+    .nav-item:hover { background: #f5f5f5; color: #1890ff; }
+    .nav-item.active { background: #e6f7ff; color: #1890ff; border-left-color: #1890ff; font-weight: 500; }
+
+    /* 主内容区 */
+    .main-wrapper { flex: 1; display: flex; overflow: hidden; }
+    .main { flex: 1; overflow-y: auto; padding: 24px; }
+    .md-card { background: #fff; border-radius: 12px; padding: 32px 40px; max-width: 900px; margin: 0 auto; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+    /* 右侧目录 */
+    .toc-sidebar { width: 280px; flex-shrink: 0; background: #fff; border-left: 1px solid #e8e8e8; overflow-y: auto; padding: 20px 0; }
+    .toc-sidebar:empty { display: none; width: 0; }
+    .toc-title { padding: 0 16px 12px; font-size: 12px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .toc-item { display: block; padding: 4px 16px; font-size: 13px; color: #666; cursor: pointer; text-decoration: none; transition: all .15s; border-left: 2px solid transparent; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toc-item:hover { color: #1890ff; }
+    .toc-item.active { color: #1890ff; border-left-color: #1890ff; font-weight: 500; }
+    .toc-item.toc-h3 { padding-left: 28px; font-size: 12px; }
+
+    /* Markdown 样式 */
+    .md-body h1 { font-size: 26px; font-weight: 600; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+    .md-body h2 { font-size: 20px; font-weight: 600; margin: 28px 0 12px; }
+    .md-body h3 { font-size: 16px; font-weight: 600; margin: 20px 0 8px; }
+    .md-body p { line-height: 1.8; margin-bottom: 12px; }
+    .md-body table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .md-body th, .md-body td { border: 1px solid #e8e8e8; padding: 10px 14px; text-align: left; white-space: nowrap; }
+    .md-body th { background: #fafafa; font-weight: 600; }
+    .md-body tr:hover { background: #fafafa; }
+    .md-body td.required-yes { color: #52c41a; font-weight: 500; }
+    .md-body td.required-no { color: #d9d9d9; }
+    .md-body td.required-cond { color: #9254de; font-weight: 500; }
+    .md-body pre { background: #282c34; color: #abb2bf; padding: 16px 20px; border-radius: 8px; overflow-x: auto; margin: 12px 0 20px; font-size: 13px; line-height: 1.6; }
+    .md-body pre code.hljs { background: transparent; padding: 0; }
+    .md-body code { font-family: "Fira Code", "Source Code Pro", Consolas, monospace; font-size: 13px; }
+    .md-body p code, .md-body li code, .md-body td code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; color: #d63384; font-size: 13px; }
+    .md-body blockquote { border-left: 4px solid #1890ff; padding: 12px 16px; margin: 12px 0; background: #f6f8fa; border-radius: 0 6px 6px 0; }
+    .md-body blockquote p { margin-bottom: 0; }
+    .md-body ul, .md-body ol { padding-left: 24px; margin-bottom: 12px; }
+    .md-body li { line-height: 1.8; }
+    .md-body a { color: #1890ff; text-decoration: none; }
+    .md-body a:hover { text-decoration: underline; }
+    .md-body hr { border: none; border-top: 1px solid #eee; margin: 20px 0; }
+
+    .loading { text-align: center; padding: 60px 0; color: #999; font-size: 15px; }
+
+    /* 移动端浮动目录按钮 */
+    .toc-fab { display: none; position: fixed; right: 16px; bottom: 24px; width: 44px; height: 44px; border-radius: 50%; background: #1890ff; color: #fff; border: none; font-size: 20px; cursor: pointer; z-index: 20; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(24,144,255,.4); transition: transform .2s, background .2s; }
+    .toc-fab:active { transform: scale(.92); }
+    .toc-fab.hidden { display: none !important; }
+
+    /* 移动端目录弹出面板 */
+    .toc-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 21; }
+    .toc-overlay.open { display: block; }
+    .toc-panel { position: fixed; right: -300px; top: 0; bottom: 0; width: 280px; max-width: 80vw; background: #fff; z-index: 22; transition: right .25s ease; display: flex; flex-direction: column; box-shadow: -2px 0 8px rgba(0,0,0,.1); }
+    .toc-panel.open { right: 0; }
+    .toc-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+    .toc-panel-header span { font-size: 15px; font-weight: 600; color: #333; }
+    .toc-panel-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #999; padding: 2px 6px; line-height: 1; }
+    .toc-panel-close:hover { color: #333; }
+    .toc-panel-body { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .toc-panel-body .toc-item { display: block; padding: 8px 16px; font-size: 14px; color: #555; cursor: pointer; text-decoration: none; border-left: 3px solid transparent; transition: all .15s; }
+    .toc-panel-body .toc-item:hover { background: #f5f5f5; color: #1890ff; }
+    .toc-panel-body .toc-item.active { background: #e6f7ff; color: #1890ff; border-left-color: #1890ff; font-weight: 500; }
+    .toc-panel-body .toc-item.toc-h3 { padding-left: 28px; font-size: 13px; }
+
+    /* 响应式 */
+    @media (max-width: 1100px) {
+      .toc-sidebar { display: none; width: 0; overflow: hidden; }
+      .toc-fab { display: flex; }
+    }
+    @media (max-width: 768px) {
+      .topbar { padding: 0 16px; }
+      .topbar .menu-btn { display: block; }
+      .sidebar { position: fixed; left: -280px; top: 56px; bottom: 0; width: 280px; z-index: 10; transition: left .25s ease; box-shadow: 2px 0 8px rgba(0,0,0,.1); }
+      .sidebar.open { left: 0; }
+      .main { padding: 16px; }
+      .md-card { padding: 20px 16px; border-radius: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <button class="menu-btn" onclick="openSidebar()">☰</button>
+    <h1>SDK 开发文档</h1>
+    <span class="version">v1.0</span>
+  </div>
+  <div class="container">
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-search">
+        <input type="text" id="searchInput" placeholder="搜索接口..." oninput="filterNav()">
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+    </div>
+    <div class="main-wrapper">
+      <div class="main" id="mainContent">
+        <div class="md-card" id="docCard">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="toc-sidebar" id="tocSidebar"></div>
+    </div>
+  </div>
+
+  <button class="toc-fab hidden" id="tocFab" onclick="openTocPanel()">☰</button>
+  <div class="toc-overlay" id="tocOverlay" onclick="closeTocPanel()"></div>
+  <div class="toc-panel" id="tocPanel">
+    <div class="toc-panel-header">
+      <span>目录</span>
+      <button class="toc-panel-close" onclick="closeTocPanel()">✕</button>
+    </div>
+    <div class="toc-panel-body" id="tocPanelBody"></div>
+  </div>
+
+  <script src="docs.js"></script>
+  <script>
+    // 构建 file -> id 映射
+    const fileToId = {};
+    docs.forEach(g => g.items.forEach(item => {
+      if (item.file) fileToId[item.file] = item.id;
+    }));
+
+    function renderNav(filter) {
+      const nav = document.getElementById('sidebarNav');
+      let html = '';
+      const kw = (filter || '').toLowerCase();
+      docs.forEach(group => {
+        const items = group.items.filter(i => !kw || i.title.toLowerCase().includes(kw) || i.id.toLowerCase().includes(kw));
+        if (!items.length) return;
+        html += '<div class="nav-group"><div class="nav-group-title">' + group.group + '</div>';
+        items.forEach(i => {
+          html += '<div class="nav-item" data-id="' + i.id + '" onclick="showDoc(\'' + i.id + '\')">' + i.title + '</div>';
+        });
+        html += '</div>';
+      });
+      nav.innerHTML = html;
+    }
+
+    // 构建右侧目录
+    function buildToc() {
+      const toc = document.getElementById('tocSidebar');
+      const panel = document.getElementById('tocPanelBody');
+      const fab = document.getElementById('tocFab');
+      const card = document.getElementById('docCard');
+      const headings = card.querySelectorAll('.md-body h2, .md-body h3');
+
+      if (headings.length < 2) {
+        toc.innerHTML = '';
+        panel.innerHTML = '';
+        fab.classList.add('hidden');
+        return;
+      }
+
+      fab.classList.remove('hidden');
+
+      // 给每个标题加 id
+      headings.forEach((h, i) => {
+        if (!h.id) h.id = 'heading-' + i;
+      });
+
+      let html = '<div class="toc-title">目录</div><div class="toc-list">';
+      let panelHtml = '';
+      headings.forEach((h, i) => {
+        const level = h.tagName === 'H3' ? 'toc-h3' : '';
+        const link = '<a class="toc-item ' + level + '" data-idx="' + i + '" href="#' + h.id + '" title="' + h.textContent + '">' + h.textContent + '</a>';
+        html += link;
+        panelHtml += link;
+      });
+      html += '</div>';
+      toc.innerHTML = html;
+      panel.innerHTML = panelHtml;
+
+      // 点击跳转（桌面端目录）
+      toc.querySelectorAll('.toc-list .toc-item').forEach(a => {
+        a.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.getElementById(this.getAttribute('href').slice(1));
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      // 点击跳转（移动端面板）
+      panel.querySelectorAll('.toc-item').forEach(a => {
+        a.addEventListener('click', function(e) {
+          e.preventDefault();
+          closeTocPanel();
+          const target = document.getElementById(this.getAttribute('href').slice(1));
+          if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 260);
+        });
+      });
+
+      // 滚动高亮
+      const mainEl = document.getElementById('mainContent');
+      let ticking = false;
+      mainEl.addEventListener('scroll', function() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function() {
+          updateTocHighlight(headings);
+          ticking = false;
+        });
+      });
+      updateTocHighlight(headings);
+    }
+
+    function updateTocHighlight(headings) {
+      const mainEl = document.getElementById('mainContent');
+      const scrollTop = mainEl.scrollTop;
+      const offset = 80;
+      let activeIdx = 0;
+      headings.forEach((h, i) => {
+        if (h.offsetTop - mainEl.offsetTop <= scrollTop + offset) {
+          activeIdx = i;
+        }
+      });
+      // 桌面端目录高亮
+      document.querySelectorAll('#tocSidebar .toc-list .toc-item').forEach((a, i) => {
+        a.classList.toggle('active', i === activeIdx);
+      });
+      const activeItem = document.querySelector('#tocSidebar .toc-list .toc-item.active');
+      if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
+      // 移动端面板高亮
+      document.querySelectorAll('#tocPanelBody .toc-item').forEach((a, i) => {
+        a.classList.toggle('active', i === activeIdx);
+      });
+      const activePanelItem = document.querySelector('#tocPanelBody .toc-item.active');
+      if (activePanelItem) activePanelItem.scrollIntoView({ block: 'nearest' });
+    }
+
+    function openTocPanel() {
+      document.getElementById('tocOverlay').classList.add('open');
+      document.getElementById('tocPanel').classList.add('open');
+    }
+
+    function closeTocPanel() {
+      document.getElementById('tocOverlay').classList.remove('open');
+      document.getElementById('tocPanel').classList.remove('open');
+    }
+
+    function showDoc(id) {
+      let found = null;
+      docs.forEach(g => g.items.forEach(i => { if (i.id === id) found = i; }));
+      if (!found) return;
+      const card = document.getElementById('docCard');
+      card.innerHTML = '<div class="md-body">' + marked.parse(found.md) + '</div>';
+      card.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+      // 给必填列上色
+      card.querySelectorAll('table').forEach(table => {
+        const ths = table.querySelectorAll('th');
+        let colIdx = -1;
+        ths.forEach((th, i) => { if (th.textContent.trim() === '必填') colIdx = i; });
+        if (colIdx >= 0) {
+          table.querySelectorAll('tbody tr, tr').forEach(tr => {
+            const td = tr.querySelectorAll('td')[colIdx];
+            if (!td) return;
+            const v = td.textContent.trim();
+            if (v === '是') td.classList.add('required-yes');
+            else if (v === '否') td.classList.add('required-no');
+            else if (v === '条件') td.classList.add('required-cond');
+          });
+        }
+      });
+      document.getElementById('mainContent').scrollTop = 0;
+      // 更新导航高亮
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === id);
+      });
+      // 拦截 md 链接点击
+      card.querySelectorAll('a').forEach(a => {
+        const href = a.getAttribute('href') || '';
+        let fileName;
+        try { fileName = decodeURIComponent(href.split('/').pop()); } catch(e) { fileName = href.split('/').pop(); }
+        if (fileName && fileName.endsWith('.md') && fileToId[fileName]) {
+          a.href = 'javascript:void(0)';
+          a.addEventListener('click', function(e) {
+            e.preventDefault();
+            showDoc(fileToId[fileName]);
+          });
+        }
+      });
+      // 构建右侧目录
+      buildToc();
+      closeSidebar();
+    }
+
+    function filterNav() {
+      renderNav(document.getElementById('searchInput').value);
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    renderNav();
+    showDoc('overview');
+  </script>
+</body>
+</html>
